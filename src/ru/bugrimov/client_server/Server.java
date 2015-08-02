@@ -28,7 +28,7 @@ public class Server {
             final int PORT = configuration.getPort();
 
             server = new ServerSocket(PORT);
-            System.out.println(" ** Сервер - " + HOST + ": " + PORT + " -> запущен... **");
+            System.out.println(" * Сервер \"" + HOST + ": " + PORT + "\" запущен. *");
             client = server.accept();
 
             for (;;) {
@@ -41,7 +41,7 @@ public class Server {
                 writer.flush();
             }
         } catch (IOException | NullPointerException e) {
-            System.err.println("Ошибка: " + e.getMessage());
+            System.err.println(" Ошибка: " + e.getMessage());
         } finally {
             if (server != null || client != null || writer != null || reader != null) {
                 try {
