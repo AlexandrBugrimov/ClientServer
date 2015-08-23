@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.Properties;
 
 public class PropertyFile {
+
     private static final String FILE_NAME = "config.properties";
     private static final String DIRECTORY_RESOURCES = ".\\src\\ru\\bugrimov\\resources\\";
     private static final String HOST_KEY = "server.host";

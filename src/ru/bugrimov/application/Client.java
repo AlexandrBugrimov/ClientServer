@@ -18,7 +18,6 @@ public class Client {
 
                 String inputMessage;
                 String outputMessage = "";
-
                 while (!outputMessage.equals(Server.EXIT)) {
                     System.out.print(" Запрос клиента: ");
                     outputMessage = bufferedReader.readLine();

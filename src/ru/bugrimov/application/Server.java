@@ -53,7 +53,6 @@ public class Server {
     private static String reversString(final String string) {
         String newString = "";
         StringTokenizer stringTokenizer = new StringTokenizer(string, " ,.!?:;-\n\t", true);
-
         while (stringTokenizer.hasMoreTokens()) {
             StringBuilder stringBuilder = new StringBuilder(stringTokenizer.nextToken());
             newString += stringBuilder.reverse();

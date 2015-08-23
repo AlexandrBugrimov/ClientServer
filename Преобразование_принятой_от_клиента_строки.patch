@@ -1,0 +1,292 @@
+Index: src/ru/bugrimov/client_server/config/Configuration.java
+===================================================================
+--- src/ru/bugrimov/client_server/config/Configuration.java	(date 1438614677000)
++++ src/ru/bugrimov/client_server/config/Configuration.java	(date 1438614677000)
+@@ -1,47 +0,0 @@
+-package ru.bugrimov.client_server.config;
+-
+-import java.io.IOException;
+-import java.net.ServerSocket;
+-
+-/** Конфигурация */
+-public class Configuration {
+-    private static final String HOST_NAME = "localhost";
+-    private String localhost;
+-    private int port;
+-
+-    public Configuration() {
+-        this.localhost = HOST_NAME;
+-        this.port = findFreePort();
+-    }
+-
+-    public Configuration(final String localhost, final int port) {
+-        this.localhost = localhost;
+-        this.port = port;
+-    }
+-
+-    public String getLocalhost() {
+-        return localhost;
+-    }
+-
+-    public int getPort() {
+-        return port;
+-    }
+-
+-    private int findFreePort() {
+-        ServerSocket socket = null;
+-        try {
+-            socket = new ServerSocket(0);
+-            socket.setReuseAddress(true);
+-
+-            return socket.getLocalPort();
+-        } catch (IOException e) {
+-            throw new IllegalStateException();
+-        } finally {
+-            if (socket != null) {
+-                try {
+-                    socket.close();
+-                } catch (IOException ignored) { }
+-            }
+-        }
+-    }
+-}
+Index: src/ru/bugrimov/client_server/Server.java
+===================================================================
+--- src/ru/bugrimov/client_server/Server.java	(date 1438614677000)
++++ src/ru/bugrimov/client_server/Server.java	(date 1438614677000)
+@@ -1,71 +0,0 @@
+-package ru.bugrimov.client_server;
+-
+-import ru.bugrimov.client_server.config.Configuration;
+-import ru.bugrimov.client_server.config.FileOfConfiguration;
+-
+-import static ru.bugrimov.client_server.config.FileOfConfiguration.*;
+-
+-import java.io.BufferedReader;
+-import java.io.IOException;
+-import java.io.InputStreamReader;
+-import java.io.PrintWriter;
+-import java.net.ServerSocket;
+-import java.net.Socket;
+-import java.util.StringTokenizer;
+-
+-public class Server {
+-    protected static ServerSocket server;
+-    private static PrintWriter writer;
+-    private static BufferedReader reader;
+-    private static Socket client;
+-
+-    public static void main(String[] args) {
+-        try {
+-            Configuration configuration = new Configuration();      // Создаем конфигурацию
+-            new FileOfConfiguration(configuration, CONFIG_INI);     // Записываем конфишурации в файл *.ini
+-
+-            final String HOST = configuration.getLocalhost();
+-            final int PORT = configuration.getPort();
+-            server = new ServerSocket(PORT);
+-
+-            System.out.println(" Сервер <" + HOST + ": " + PORT + "> - запущен.");
+-
+-
+-            for (;;) {
+-                client = server.accept();
+-                writer = new PrintWriter(client.getOutputStream());
+-                reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+-                String str = reader.readLine();
+-                if (str != null) {
+-                    System.out.println(" Запрос клиента -> " + str);
+-                    writer.write(reversString(str) + "\n");
+-                    writer.flush();
+-                }
+-            }
+-        } catch (IOException | NullPointerException e) {
+-            System.err.println(" Ошибка: " + e.getMessage());
+-        } finally {
+-            if (server != null || client != null || writer != null || reader != null) {
+-                try {
+-                    server.close();
+-                    writer.close();
+-                    client.close();
+-                    reader.close();
+-                } catch (IOException ignored) {
+-                }
+-            }
+-        }
+-    }
+-
+-    private static String reversString(final String string) {
+-        String newString = "";
+-        StringTokenizer stringTokenizer = new StringTokenizer(string, " ,.!?:;-\n\t", true);
+-
+-        while (stringTokenizer.hasMoreTokens()) {
+-            StringBuilder stringBuilder = new StringBuilder(stringTokenizer.nextToken());
+-            newString += stringBuilder.reverse();
+-        }
+-        return newString;
+-    }
+-}
+-
+Index: resource/config.ini
+===================================================================
+--- resource/config.ini	(date 1438614677000)
++++ resource/config.ini	(date 1438614677000)
+@@ -1,2 +0,0 @@
+-host: localhost
+-port: 58879
+\ No newline at end of file
+Index: src/ru/bugrimov/client_server/Client.java
+===================================================================
+--- src/ru/bugrimov/client_server/Client.java	(date 1438614677000)
++++ src/ru/bugrimov/client_server/Client.java	(date 1438614677000)
+@@ -1,68 +0,0 @@
+-package ru.bugrimov.client_server;
+-
+-import ru.bugrimov.client_server.config.Configuration;
+-
+-import java.io.BufferedReader;
+-import java.io.IOException;
+-import java.io.InputStreamReader;
+-import java.io.PrintWriter;
+-import java.net.Socket;
+-import java.util.Scanner;
+-
+-import static ru.bugrimov.client_server.config.FileOfConfiguration.*;
+-
+-public class Client {
+-
+-    protected Socket client;
+-    private PrintWriter writer;
+-    private BufferedReader reader;
+-
+-    public static void main(String[] args) {
+-        new Client();
+-    }
+-
+-    Client() {
+-        while (true) {
+-            if (connectToServer()) {
+-                System.out.print("Введите строку: ");
+-
+-                writer.write(inputString() + "\n");
+-                writer.flush();
+-
+-                String str;
+-                try {
+-                    while ((str = reader.readLine()) != null) {
+-                        System.out.println("Получено от сервера: " + str);
+-                    }
+-                    writer.close();
+-                    reader.close();
+-                } catch (IOException e) {
+-                    System.err.println("Ошибка: " + e.getMessage());
+-                }
+-            }
+-        }
+-    }
+-
+-    private boolean connectToServer() {
+-        try {
+-            Configuration configuration = readFileConfiguration(PATH + CONFIG_INI);     // Считываем конфигурацию из файла
+-            final String HOST = configuration.getLocalhost();
+-            final int PORT = configuration.getPort();
+-
+-            client = new Socket(HOST, PORT);
+-            reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+-            writer = new PrintWriter(client.getOutputStream());
+-            System.out.println(" * Клиент запущен * ");
+-            return true;
+-        } catch (Exception e) {
+-            System.err.println("Ошибка: " + e.getMessage());
+-            return false;
+-        }
+-    }
+-
+-    private String inputString() {
+-        Scanner input = new Scanner(System.in);
+-        return input.nextLine();
+-    }
+-}
+-
+Index: src/ru/bugrimov/client_server/config/FileOfConfiguration.java
+===================================================================
+--- src/ru/bugrimov/client_server/config/FileOfConfiguration.java	(date 1438614677000)
++++ src/ru/bugrimov/client_server/config/FileOfConfiguration.java	(date 1438614677000)
+@@ -1,78 +0,0 @@
+-package ru.bugrimov.client_server.config;
+-
+-import java.io.FileNotFoundException;
+-import java.io.FileReader;
+-import java.io.FileWriter;
+-import java.io.IOException;
+-import java.util.Scanner;
+-
+-/** Файл конфигурации */
+-public class FileOfConfiguration {
+-    public static final String CONFIG_INI = "config.ini";
+-    public static final String PATH = ".\\resource\\";
+-    private static final String HOST = "host:";
+-    private static final String PORT = "port:";
+-
+-    private String localhostStr = "";
+-    private String portStr = "";
+-
+-    public FileOfConfiguration(final Configuration configuration, final String fileName) {
+-        this.localhostStr += (HOST + " " + configuration.getLocalhost());
+-        this.portStr += (PORT + " " + configuration.getPort());
+-        this.fileWrite(fileName);
+-    }
+-
+-    private String getPortStr() {
+-        return portStr;
+-    }
+-
+-    private String getLocalhostStr() {
+-        return localhostStr;
+-    }
+-
+-    private void fileWrite(final String fileName) {
+-        FileWriter fileWriter = null;
+-        try {
+-            fileWriter = new FileWriter(PATH + fileName, false);
+-            fileWriter.write(getLocalhostStr());
+-            fileWriter.append('\n');
+-            fileWriter.write(getPortStr());
+-            fileWriter.flush();
+-        } catch (IOException e) {
+-            System.err.println("Ошибка: " + e.getMessage());
+-        } finally {
+-            if (fileWriter != null) {
+-                try {
+-                    fileWriter.close();
+-                } catch (IOException ignored) {
+-                }
+-            }
+-        }
+-    }
+-
+-    public static Configuration readFileConfiguration(final String fileName) {
+-        FileReader fileReader = null;
+-        String localhost = null;
+-        int port = 0;
+-        try {
+-            fileReader = new FileReader(fileName);
+-            Scanner scanner = new Scanner(fileReader);
+-            while (scanner.hasNext()) {
+-                switch (scanner.next()) {
+-                    case HOST: localhost = scanner.next();   break;
+-                    case PORT: port = Integer.parseInt(scanner.next()); break;
+-                }
+-            }
+-        } catch (FileNotFoundException e) {
+-            System.err.println("Ошибка: " + e.getMessage());
+-        } finally {
+-            if (fileReader != null) {
+-                try {
+-                    fileReader.close();
+-                } catch (IOException ignored) {
+-                }
+-            }
+-        }
+-        return new Configuration(localhost, port);
+-    }
+-}

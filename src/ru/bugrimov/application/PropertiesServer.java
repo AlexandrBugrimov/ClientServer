@@ -6,7 +6,7 @@ import java.util.Properties;
 
 public class PropertiesServer {
     private static final String HOST_NAME = "localhost";
-    private static final int DEFAULT_PORT = 55_555;
+    private static final int DEFAULT_PORT = 55_556;
     private static final String HOST_KEY = "server.host";
     private static final String PORT_KEY = "server.port";
 
